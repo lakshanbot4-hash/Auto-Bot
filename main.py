@@ -15,8 +15,8 @@ import pandas as pd
 # =========================
 # CONFIG FROM ENV
 # =========================
-BINANCE_API_KEY = os.getenv("VMYilkqC7UuXzhaaMGLBRipsAmFA6nsiVwBg4N6MA3AlI3BOa26JtcAYTEUIwnJK", "").strip()
-BINANCE_API_SECRET = os.getenv("mPYonE5yHrqNYiHw2x1ETFpAPWcHRT4iBUI7CuQwFmZUjWrfJLbTtSevvJqEZ730", "").strip()
+BINANCE_API_KEY = os.getenv("VMYilkqC7UuXzhaaMGLBRipsAmFA6nsiVwBg4N6MA3AlI3BOa26JtcAYTEUIwnJK").strip()
+BINANCE_API_SECRET = os.getenv("mPYonE5yHrqNYiHw2x1ETFpAPWcHRT4iBUI7CuQwFmZUjWrfJLbTtSevvJqEZ730").strip()
 BOT_TOKEN = os.getenv("8752512217:AAG0Y6ogZ_1lUYKuu5heUm1Vs2dVZxxxK8w", "").strip()
 CHAT_ID = os.getenv("-1003953557811", "").strip()
 
