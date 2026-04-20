@@ -12,13 +12,10 @@ from urllib.parse import urlencode
 import requests
 import pandas as pd
 
-# =========================
-# CONFIG FROM ENV
-# =========================
-BINANCE_API_KEY = os.getenv("VMYilkqC7UuXzhaaMGLBRipsAmFA6nsiVwBg4N6MA3AlI3BOa26JtcAYTEUIwnJK")
-BINANCE_API_SECRET = os.getenv("mPYonE5yHrqNYiHw2x1ETFpAPWcHRT4iBUI7CuQwFmZUjWrfJLbTtSevvJqEZ730")
-BOT_TOKEN = os.getenv("8752512217:AAG0Y6ogZ_1lUYKuu5heUm1Vs2dVZxxxK8w")
-CHAT_ID = os.getenv("-1003953557811")
+BINANCE_API_KEY = os.getenv("AHs7R79r6lqs5oLvI12Mxxz857SWa4pKIAxgmCrvS9cORbrcfHmv7cMEiVCq8osu", "").strip()
+BINANCE_API_SECRET = os.getenv("0gYmVtOls7AtLg8ssQ345PCqqyysKVUoaFFLWtGvmiTwdlRc5utFq33F07jINy6i", "").strip()
+BOT_TOKEN = os.getenv("8752512217:AAG0Y6ogZ_1lUYKuu5heUm1Vs2dVZxxxK8w", "").strip()
+CHAT_ID = os.getenv("1003953557811", "").strip()
 
 BASE_URL = os.getenv("BASE_URL", "https://fapi.binance.com").strip()
 SYMBOLS = [s.strip().upper() for s in os.getenv("SYMBOLS", "BTCUSDT,ETHUSDT,SOLUSDT").split(",") if s.strip()]
@@ -28,26 +25,17 @@ TIMEZONE = os.getenv("TIMEZONE", "Asia/Colombo")
 DAILY_TARGET_USDT = float(os.getenv("DAILY_TARGET_USDT", "1.0"))
 DAILY_MAX_LOSS_USDT = float(os.getenv("DAILY_MAX_LOSS_USDT", "2.0"))
 MAX_CONSECUTIVE_LOSSES = int(os.getenv("MAX_CONSECUTIVE_LOSSES", "2"))
-
-# Position sizing:
-# wallet balance * capital fraction = margin used
-# margin * leverage = notional
-CAPITAL_FRACTION = float(os.getenv("CAPITAL_FRACTION", "0.20"))  # 20% of wallet as margin
+CAPITAL_FRACTION = float(os.getenv("CAPITAL_FRACTION", "0.20"))
 MIN_SIGNAL_SCORE = float(os.getenv("MIN_SIGNAL_SCORE", "2.0"))
-
-# Strategy tuning
 ATR_STOP_MULT = float(os.getenv("ATR_STOP_MULT", "1.2"))
-TP_MULT = float(os.getenv("TP_MULT", "1.5"))  # target = risk * TP_MULT
+TP_MULT = float(os.getenv("TP_MULT", "1.5"))
 COOLDOWN_MINUTES = int(os.getenv("COOLDOWN_MINUTES", "15"))
 
 STATE_FILE = "state.json"
 SESSION = requests.Session()
 SESSION.headers.update({"X-MBX-APIKEY": BINANCE_API_KEY})
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
 if not BINANCE_API_KEY or not BINANCE_API_SECRET:
     raise ValueError("Missing BINANCE_API_KEY or BINANCE_API_SECRET")
@@ -55,9 +43,6 @@ if not BOT_TOKEN or not CHAT_ID:
     raise ValueError("Missing BOT_TOKEN or CHAT_ID")
 
 
-# =========================
-# STATE
-# =========================
 def default_state():
     return {
         "day": None,
@@ -86,9 +71,6 @@ def save_state(state):
 STATE = load_state()
 
 
-# =========================
-# TELEGRAM
-# =========================
 def tg_send(text: str):
     try:
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -98,9 +80,6 @@ def tg_send(text: str):
         logging.error("Telegram send error: %s", e)
 
 
-# =========================
-# BINANCE HELPERS
-# =========================
 def _ts():
     return int(time.time() * 1000)
 
@@ -144,9 +123,6 @@ def signed_request(method: str, path: str, params=None):
     return r.json()
 
 
-# =========================
-# MARKET DATA
-# =========================
 EXCHANGE_RULES = {}
 
 
@@ -172,12 +148,6 @@ def round_step(value: float, step: float) -> float:
     if step <= 0:
         return value
     return math.floor(value / step) * step
-
-
-def round_tick(value: float, tick: float) -> float:
-    if tick <= 0:
-        return value
-    return math.floor(value / tick) * tick
 
 
 def get_klines(symbol: str, interval: str, limit: int = 300) -> pd.DataFrame:
@@ -216,16 +186,12 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# =========================
-# ACCOUNT / ORDER
-# =========================
 def get_account():
     return signed_request("GET", "/fapi/v3/account")
 
 
 def get_wallet_balance() -> float:
     acc = get_account()
-    # totalWalletBalance is standard on account payload
     return float(acc.get("totalWalletBalance", 0.0))
 
 
@@ -260,10 +226,18 @@ def set_leverage(symbol: str, leverage: int):
         logging.warning("Set leverage failed for %s: %s", symbol, e)
 
 
+def format_qty(symbol: str, qty: float) -> str:
+    rules = EXCHANGE_RULES[symbol]
+    step = rules["stepSize"]
+    q = round_step(qty, step)
+    precision = max(0, int(round(-math.log10(step))) if step < 1 else 0)
+    return f"{q:.{precision}f}"
+
+
 def place_market_order(symbol: str, side: str, qty: float, reduce_only: bool = False):
     params = {
         "symbol": symbol,
-        "side": side,              # BUY / SELL
+        "side": side,
         "type": "MARKET",
         "quantity": format_qty(symbol, qty),
         "newOrderRespType": "RESULT"
@@ -271,14 +245,6 @@ def place_market_order(symbol: str, side: str, qty: float, reduce_only: bool = F
     if reduce_only:
         params["reduceOnly"] = "true"
     return signed_request("POST", "/fapi/v1/order", params)
-
-
-def format_qty(symbol: str, qty: float) -> str:
-    rules = EXCHANGE_RULES[symbol]
-    step = rules["stepSize"]
-    q = round_step(qty, step)
-    precision = max(0, int(round(-math.log10(step))) if step < 1 else 0)
-    return f"{q:.{precision}f}"
 
 
 def calc_order_qty(symbol: str, price: float, wallet_balance: float) -> float:
@@ -296,29 +262,24 @@ def calc_order_qty(symbol: str, price: float, wallet_balance: float) -> float:
     if qty < rules["minQty"]:
         qty = rules["minQty"]
 
-    # final notional check
     if qty * price < min_notional:
         qty = round_step((min_notional / price) + rules["stepSize"], rules["stepSize"])
 
     return qty
 
 
-# =========================
-# STRATEGY
-# =========================
 def score_symbol(symbol: str):
     df1h = add_indicators(get_klines(symbol, "1h", 300))
     df5m = add_indicators(get_klines(symbol, "5m", 300))
 
-    h = df1h.iloc[-2]  # last closed candle
+    h = df1h.iloc[-2]
     a = df5m.iloc[-3]
-    b = df5m.iloc[-2]  # signal candle (closed)
-    c = df5m.iloc[-1]  # current candle
+    b = df5m.iloc[-2]
+    c = df5m.iloc[-1]
 
     trend_up = h["ema50"] > h["ema200"]
     trend_down = h["ema50"] < h["ema200"]
 
-    # Basic volatility filter
     atr_pct = float(b["atr"] / b["close"]) if b["close"] else 0.0
     if atr_pct < 0.002:
         return None
@@ -327,7 +288,6 @@ def score_symbol(symbol: str):
     side = None
     entry = float(c["close"])
 
-    # Long setup
     if trend_up:
         if b["close"] > b["ema20"] > b["ema50"]:
             score += 1.0
@@ -340,7 +300,6 @@ def score_symbol(symbol: str):
         if score >= MIN_SIGNAL_SCORE:
             side = "BUY"
 
-    # Short setup
     if trend_down and side is None:
         score = 0.0
         if b["close"] < b["ema20"] < b["ema50"]:
@@ -398,9 +357,6 @@ def choose_best_signal():
     return signals[0]
 
 
-# =========================
-# DAILY GUARDS
-# =========================
 def now_local():
     return datetime.now(ZoneInfo(TIMEZONE))
 
@@ -434,9 +390,6 @@ def daily_limits_hit() -> bool:
     return False
 
 
-# =========================
-# TRADE MANAGEMENT
-# =========================
 def enter_trade(signal: dict):
     wallet = get_wallet_balance()
     symbol = signal["symbol"]
@@ -489,15 +442,10 @@ def close_trade(reason: str):
     side = trade["side"]
     qty = trade["qty"]
     entry = trade["entry"]
-
     exit_side = "SELL" if side == "BUY" else "BUY"
-
-    # Get latest price before exit
     px = float(get_klines(symbol, "1m", 2).iloc[-1]["close"])
-
     place_market_order(symbol, exit_side, qty, reduce_only=True)
 
-    # Approximate PnL before fees
     pnl = (px - entry) * qty if side == "BUY" else (entry - px) * qty
 
     if pnl < 0:
@@ -527,7 +475,6 @@ def manage_open_trade():
     side = trade["side"]
     stop = trade["stop"]
     target = trade["target"]
-
     px = float(get_klines(symbol, "1m", 2).iloc[-1]["close"])
 
     if side == "BUY":
@@ -553,9 +500,6 @@ def cooldown_active() -> bool:
     return (time.time() - last_ts) < (COOLDOWN_MINUTES * 60)
 
 
-# =========================
-# MAIN LOOP
-# =========================
 def bootstrap():
     fetch_exchange_rules()
     reset_day_if_needed()
@@ -576,7 +520,6 @@ def main():
         try:
             reset_day_if_needed()
 
-            # hard daily limits
             pnl = get_day_pnl()
             if pnl >= DAILY_TARGET_USDT:
                 if STATE.get("open_trade"):
@@ -599,14 +542,12 @@ def main():
                 time.sleep(LOOP_SECONDS)
                 continue
 
-            # manage current trade first
             pos = get_open_position()
             if STATE.get("open_trade") and pos:
                 manage_open_trade()
                 time.sleep(LOOP_SECONDS)
                 continue
 
-            # if no exchange position but state still says open, clear it
             if STATE.get("open_trade") and not pos:
                 STATE["open_trade"] = None
                 save_state(STATE)
@@ -616,7 +557,6 @@ def main():
                 time.sleep(LOOP_SECONDS)
                 continue
 
-            # no new entries if guard already hit
             if daily_limits_hit():
                 time.sleep(LOOP_SECONDS)
                 continue
