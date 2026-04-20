@@ -15,10 +15,10 @@ import pandas as pd
 # =========================
 # CONFIG FROM ENV
 # =========================
-BINANCE_API_KEY = (os.getenv("VMYilkqC7UuXzhaaMGLBRipsAmFA6nsiVwBg4N6MA3AlI3BOa26JtcAYTEUIwnJK").strip()
-BINANCE_API_SECRET = (os.getenv("mPYonE5yHrqNYiHw2x1ETFpAPWcHRT4iBUI7CuQwFmZUjWrfJLbTtSevvJqEZ730").strip()
-BOT_TOKEN = (os.getenv("8752512217:AAG0Y6ogZ_1lUYKuu5heUm1Vs2dVZxxxK8w", "").strip()
-CHAT_ID = (os.getenv("-1003953557811", "").strip()
+BINANCE_API_KEY = os.getenv("VMYilkqC7UuXzhaaMGLBRipsAmFA6nsiVwBg4N6MA3AlI3BOa26JtcAYTEUIwnJK")
+BINANCE_API_SECRET = os.getenv("mPYonE5yHrqNYiHw2x1ETFpAPWcHRT4iBUI7CuQwFmZUjWrfJLbTtSevvJqEZ730")
+BOT_TOKEN = os.getenv("8752512217:AAG0Y6ogZ_1lUYKuu5heUm1Vs2dVZxxxK8w")
+CHAT_ID = os.getenv("-1003953557811")
 
 BASE_URL = os.getenv("BASE_URL", "https://fapi.binance.com").strip()
 SYMBOLS = [s.strip().upper() for s in os.getenv("SYMBOLS", "BTCUSDT,ETHUSDT,SOLUSDT").split(",") if s.strip()]
