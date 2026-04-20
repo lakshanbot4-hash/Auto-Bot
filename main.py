@@ -5,9 +5,9 @@ import hashlib
 import requests
 
 # ENV VARIABLES
-API_KEY = os.getenv("AHs7R79r6lqs5oLvI12Mxxz857SWa4pKIAxgmCrvS9cORbrcfHmv7cMEiVCq8osu")
-API_SECRET = os.getenv("0gYmVtOls7AtLg8ssQ345PCqqyysKVUoaFFLWtGvmiTwdlRc5utFq33F07jINy6i")
-BOT_TOKEN = os.getenv("8752512217:AAG0Y6ogZ_1lUYKuu5heUm1Vs2dVZxxxK8w")
+API_KEY = os.getenv("qQPzHRXBeGnSTXw3sJ1wp69uY8oH3J0V8SiRXcKnhmLtjCMi13lG64iBdVPuMOYa")
+API_SECRET = os.getenv("cpcViAholLoiTrfPalyuS5KjJVmEhKhbaJ2xsYm2ETDKQorFVJBLl7mxlT2ozVoC")
+BOT_TOKEN = os.getenv("8752512217:AAEkx1lDTIzuYV8CBAYuQ6WwhfSRMWumZxs")
 CHAT_ID = os.getenv("1003953557811")
 
 BASE_URL = "https://fapi.binance.com"
