@@ -9,8 +9,6 @@ BASE_URL = "https://fapi.binance.com"
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
 LOOP_SECONDS = 60
 
-if not BOT_TOKEN or not CHAT_ID:
-    raise ValueError("Missing BOT_TOKEN or CHAT_ID")
 
 sent_signals = {}
 
